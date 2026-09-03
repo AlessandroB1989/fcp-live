@@ -1,68 +1,63 @@
 ---
 name: fcp-live
-description: Piloter Final Cut Pro en direct depuis Claude (via le MCP SpliceKit) pour monter les vidéos créées ensemble, poser le motion design et les textes dans la charte d'un projet (baair.solutions en premier), et ajouter un voice-over ElevenLabs. Utiliser dès qu'Alexandre dit « monte cette vidéo », « mets-la dans Final Cut », « fais le montage », « ajoute les textes / le motion design », « reel baair », « habille cette vidéo Higgsfield/Kling », « voice-over », « sous-titres dans FCP », ou mentionne Final Cut, FCP, SpliceKit, timeline, titres, brandkit vidéo. L'export final reste à la main d'Alexandre.
+description: Edit videos in Final Cut Pro live from Claude via the SpliceKit MCP — import footage (Higgsfield, Kling, HeyGen, camera), cut it, lay out titles and motion-design text styled from a project brand kit (fonts, colours, safe zones), add a voice-over, and verify the result visually. Trigger on "edit this video", "put it in Final Cut", "make the reel", "add the titles / motion design", "brand this video", "voice-over", "captions in FCP", any mention of Final Cut, FCP, SpliceKit, timeline, brand kit video — and their French equivalents (« monte cette vidéo », « mets-la dans Final Cut », « fais le montage », « ajoute les textes », « reel baair », « habille cette vidéo »). Export stays manual.
 ---
 
-# fcp-live — montage Final Cut Pro piloté par Claude
+# fcp-live — Claude edits Final Cut Pro, live, in your brand
 
-## Ce que fait ce skill
-1. **Montage** d'une vidéo générée (Higgsfield, Kling, HeyGen…) ou tournée : import, mise en timeline, coupes, rythme.
-2. **Motion design / textes** : titres, étiquettes, hooks, CTA, posés en clips connectés et stylés selon le **brand kit du projet** (`brandkits/<projet>.json`).
-3. **Transfert de charte** : le même brief donne un reel baair (Fraunces + carré violet + angles droits) ou le reel d'un autre projet, sans retoucher le workflow.
-4. **Voice-over** ElevenLabs quand le brief le demande.
-5. **Export : jamais automatisé.** Claude prépare tout ; Alexandre exporte (Fichier > Partager).
+## What this skill does
+1. **Editing** of generated (Higgsfield, Kling, HeyGen…) or shot footage: import, timeline, cuts, pacing.
+2. **Motion design / text**: hooks, lines, labels, CTAs as connected title clips, styled from the project's **brand kit** (`brandkits/<project>.json`).
+3. **Brand transfer**: the same brief yields a baair reel (Fraunces + purple square + hard corners) or another project's reel, without touching the workflow.
+4. **Voice-over** (ElevenLabs or any TTS) when the brief asks for it.
+5. **Export: never automated.** Claude prepares everything; the user exports (File > Share).
 
-## Prérequis (état au 2026-09-03)
-- FCP patché SpliceKit : `~/Applications/SpliceKit/Final Cut Pro.app` (copie de FCP 12.3, FCP App Store intact).
-- Sources SpliceKit : `~/.local/share/splicekit/SpliceKit` (v3.3.9 + 3 correctifs locaux, voir § Maintenance).
-- MCP `splicekit` enregistré en scope user dans Claude Code (221 outils). Le pont écoute sur `127.0.0.1:9876` **seulement quand la copie patchée tourne**.
-- Télémétrie Sentry **désactivée** via `~/Library/Application Support/SpliceKit/SpliceKitSentryConfig.plist`.
-- Client de secours sans MCP : `scripts/skbridge.py METHOD '{json}'` (même protocole JSON-RPC).
-- Polices baair installées dans `~/Library/Fonts` le 2026-09-03 (Google Fonts, OFL, variables) : Fraunces, Instrument Serif, Inter, JetBrains Mono.
+## Prerequisites
+- Patched FCP: `~/Applications/SpliceKit/Final Cut Pro.app` (copy of FCP 12.x; the App Store app is untouched). Installed by `install.sh`.
+- SpliceKit sources: `~/.local/share/splicekit/SpliceKit` (v3.3.9 + the fixes in `splicekit-patches/`, upstream PR elliotttate/SpliceKit#87).
+- MCP `splicekit` registered in Claude Code (user scope, ~220 tools). The bridge listens on `127.0.0.1:9876` **only while the patched copy is running**.
+- Crash telemetry (Sentry) disabled via `~/Library/Application Support/SpliceKit/SpliceKitSentryConfig.plist`.
+- Fallback client without MCP: `scripts/skbridge.py METHOD '{json}'` (same JSON-RPC protocol).
+- Brand fonts installed in `~/Library/Fonts` (baair: Fraunces, Instrument Serif, Inter, JetBrains Mono — Google Fonts, OFL). A missing font silently falls back to Helvetica.
 
-## Règles de sécurité
-- **Une seule instance de FCP** : fermer le FCP standard (AppleScript `quit`, jamais `kill`) avant de lancer la copie patchée.
-- **Bibliothèque de travail** : tester dans `Perso` (événement `SpliceKit Test`). Ne toucher `Baair_FCP` que sur demande explicite et sur le projet nommé.
-- Avant toute action destructive (delete, replaceWithGap, bladeAll, batch), lister la timeline (`get_timeline_clips`) et annoncer ce qui va changer. `Cmd+Z` existe : `history_action("undo")`.
-- Un dialogue macOS de permission (accès Téléchargements, micro…) **bloque le pont** : ne jamais cliquer à la place d'Alexandre, lui demander d'autoriser.
-- Ne jamais lancer `share_project`/`batch_export` sans demande explicite.
+## Safety rules
+- **One FCP instance at a time**: quit the stock FCP (AppleScript `quit`, never `kill`) before launching the patched copy.
+- **Sandbox library**: test in a scratch library/event (baair: `Perso` › `SpliceKit Test`). Touch production libraries only on explicit request, on the named project.
+- Before any destructive action (delete, replaceWithGap, bladeAll, batch), list the timeline (`get_timeline_clips`) and say what will change. Undo exists: `history_action("undo")`.
+- A macOS permission dialog (Downloads access, microphone…) **blocks the bridge**: never click it on the user's behalf, ask them to allow it.
+- Never call `share_project` / `batch_export` without an explicit request.
 
-## Workflow standard (reel 9:16)
-1. **Brief** : projet (brand kit), vidéo source, message (hook, 2–4 lignes, CTA), durée cible, voice-over oui/non.
-2. **Pont** : `bridge_status()`. Si erreur, ouvrir la copie patchée (`open ~/Applications/SpliceKit/Final\ Cut\ Pro.app`) et attendre le port 9876 (~30 s). Vérifier `dialog.detect` / `detect_dialog()`.
-3. **Projet** : écrire un `spec.json` (voir `scripts/build_fcpxml.py`) → `python3 scripts/build_fcpxml.py spec.json > reel.fcpxml` → `import_fcpxml(xml, internal=True)`. Le projet arrive dans la bibliothèque active, événement nommé dans le spec. Puis `open_project(name)`.
-   - Alternative pour un projet existant : `import_media(paths, event=…)` puis `browser_append_clip(name=…)`.
-4. **Montage** : `get_timeline_clips()` → coupes `blade_at_times`, `timeline_action("delete")`, `trim_clips_to_beats` si musique, `apply_transition` avec parcimonie (charte baair : coupes franches, fondus 6–8 images maxi).
-5. **Textes / motion design** : titres = clips connectés (lane 1) générés par `build_fcpxml.py` avec `role` (title / signature / body / label) et `color` du brand kit ; `size` et `position` en pixels du cadre depuis le centre, y vers le haut (`"0 620"` = hook en haut, `"0 -560"` = bas ; zones sûres au § Brand kit). Titres simultanés : lanes attribuées automatiquement. Pour retoucher : `select_clip_in_lane(1)` → `set_inspector_property("positionY", …)`, `get_title_text()` pour vérifier police/taille.
-6. **Vérification visuelle obligatoire** : `seek_to_time` sur chaque titre → `capture_viewer()` → lire le PNG. Contrôler : police réellement chargée, débordement, contraste, un seul carré violet.
-7. **Voice-over** (optionnel) : générer avec `mcp__ElevenLabs_Player__generate_tts` (voix baair à confirmer), récupérer le fichier audio, `import_media(path)` puis `browser_append_clip` / `timeline_action("connectToPrimaryStoryline")`, `assign_role("dialogue")`, `mixer_set_volume` pour ducker la musique (−12 dB sous la voix).
-8. **Sous-titres** si demandés : `generate_captions` (style via `set_caption_style`, police du brand kit) ou `import_srt_as_markers`.
-9. **Livraison** : résumé de la timeline (`analyze_timeline`), captures, et rappel : « prêt à exporter ».
+## Standard workflow (9:16 reel)
+1. **Brief**: project (brand kit), source video, message (hook, 2–4 lines, CTA), target length, voice-over yes/no.
+2. **Bridge**: `bridge_status()`. On error, launch the patched copy (`open ~/Applications/SpliceKit/Final\ Cut\ Pro.app`), wait for port 9876 (~30 s), then check `detect_dialog()`.
+3. **Project**: write a `spec.json` (see `scripts/build_fcpxml.py` docstring) → `python3 scripts/build_fcpxml.py spec.json > reel.fcpxml` → `import_fcpxml(xml, internal=True)`. The project lands in the active library, in the event named by the spec. Then `open_project(name)`.
+   - For an existing project: `import_media(paths, event=…)` then `browser_append_clip(name=…)`.
+4. **Cut**: `get_timeline_clips()` → `blade_at_times`, `timeline_action("delete")`, `trim_clips_to_beats` with music, `apply_transition` sparingly (baair: hard cuts, fades of 6–8 frames max).
+5. **Text / motion design**: titles are connected clips generated by `build_fcpxml.py` with a brand-kit `role` (title / signature / body / label) and `color`; `size` and `position` in **frame pixels from centre, y up** (`"0 620"` = hook near the top, `"0 -560"` = bottom; safe zones below). Simultaneous titles get their own lanes automatically. To tweak: `select_clip_in_lane(n)` → `set_inspector_property("positionY", …)`; `get_title_text()` to check font/size.
+6. **Mandatory visual check**: `seek_to_time` on each title → `capture_viewer()` → read the PNG. Check: font actually loaded, overflow, contrast, one accent element only.
+7. **Voice-over** (optional): generate the audio (ElevenLabs MCP `generate_tts`, or any TTS), get the file path, `import_media(path)` then `browser_append_clip` + `timeline_action("connectToPrimaryStoryline")`, `assign_role("dialogue")`, `mixer_set_volume` to duck music (−12 dB under the voice).
+8. **Captions** if requested: `generate_captions` (style via `set_caption_style`, brand-kit font) or `import_srt_as_markers`.
+9. **Handover**: timeline summary (`analyze_timeline`), captures, and the reminder: "ready to export".
 
-## Brand kit → FCP (valeurs calibrées le 2026-09-03, FCP 12.3, projet 1080×1920)
-- Fichier : `brandkits/<id>.json` (couleurs hex + valeurs FCP « r g b a », polices par rôle, règles, formats vidéo, style de motion).
-- baair : `ink #0A0A0A`, `ink_paper #FAFAF7`, `purple #8C57E9` (le seul accent, carré, jamais arrondi), Fraunces 700/900 titres, Instrument Serif italique mot-signature, Inter corps, JetBrains Mono étiquettes uppercase.
-- Nouveau projet : dupliquer `baair.json`, changer id/couleurs/polices ; le reste du workflow ne bouge pas.
-- **Titres = « Basic Title » + `<text-style>`** : les polices installées dans `~/Library/Fonts` sont bien chargées (Fraunces Bold, Instrument Serif Italic, Inter, JetBrains Mono vérifiés au viewer).
-- **Échelle Motion = 2× les pixels du cadre** : `build_fcpxml.py` reçoit `size` et `position` en pixels du cadre et divise par `template_scale` (2.0). Mesuré : position « 0 800 » tombe ~740 px au-dessus du centre, « 0 −800 » ~700 px en dessous ; taille 96 px ≈ 97 px rendus.
-- **Titres simultanés → lanes distinctes** (auto dans le script). Deux titres dans la même lane au même instant : FCP n'en rend qu'un, sans erreur.
-- **Runs** : une ligne peut mélanger les styles (`"runs": [{"text":"Tools, ","role":"title"},{"text":"not decks.","role":"signature"}]`).
-- **Carré violet** : titre « ■ » (U+25A0) en `purple`, taille 56 px, placé 140 px au-dessus du hook. Vérifié.
-- Zones sûres reel : hook à y ≈ +620 (sous la barre d'état), corps/étiquette à y ≈ −560/−680 (au-dessus de l'UI Instagram). Ne rien poser sous −760.
-- Clé FCPXML de position pour Basic Title : `9999/999166631/999166633/1/100/101` (Transform > Position). La clé « Content Position » `9999/10003/1/100/101` du moteur de sous-titres SpliceKit vient d'un autre template et est ignorée ici.
-- Projets de test présents dans Perso › « SpliceKit Test » : Test Reel baair, Calib baair, Calib2 baair, Demo baair (supprimables).
+## Brand kit → FCP (calibrated 2026-09-03, FCP 12.3, 1080×1920 project)
+- File: `brandkits/<id>.json` (hex colours + FCP "r g b a" values, fonts per role, rules, video formats, motion style). New project: copy `baair.json`, change id/colours/fonts; nothing else moves.
+- baair: `ink #0A0A0A`, `ink_paper #FAFAF7`, `purple #8C57E9` (the only accent, a square, never rounded), Fraunces 700/900 titles, Instrument Serif italic signature word, Inter body, JetBrains Mono uppercase labels.
+- **Titles = "Basic Title" + `<text-style>`**: fonts installed in `~/Library/Fonts` load correctly (Fraunces Bold, Instrument Serif Italic, Inter, JetBrains Mono verified in the viewer).
+- **Motion template space = 2× frame pixels**: `build_fcpxml.py` takes `size` and `position` in frame pixels and divides by `template_scale` (2.0). Measured: position "0 800" lands ~740 px above centre, "0 −800" ~700 px below; size 96 px renders ≈ 97 px.
+- **Simultaneous titles → distinct lanes** (automatic). Two titles in the same lane at the same time: FCP renders only one, with no error.
+- **Runs**: one line can mix styles (`"runs": [{"text":"Tools, ","role":"title"},{"text":"not decks.","role":"signature"}]`).
+- **Accent square**: a title "■" (U+25A0) in `purple`, 56 px, 140 px above the hook. Verified.
+- Reel safe zones: hook at y ≈ +620 (under the status bar), body/label at y ≈ −560 / −680 (above the Instagram UI). Nothing below −760.
+- FCPXML position key for Basic Title: `9999/999166631/999166633/1/100/101` (Transform > Position). The "Content Position" key `9999/10003/1/100/101` used by SpliceKit's caption engine belongs to another template and is ignored here.
 
-## Maintenance SpliceKit
-- Après une mise à jour de FCP par l'App Store : `cd ~/.local/share/splicekit/SpliceKit && ./patcher/patch_fcp.sh` (recopie + rebuild + injection + signature). Compte ~7 Go et 3–5 min.
-- Rebuild seul : `./patcher/patch_fcp.sh --no-copy`. Désinstaller : `--uninstall` (supprime `~/Applications/SpliceKit`).
-- Correctifs locaux appliqués sur v3.3.9 (à réappliquer si `git pull`) :
-  1. `Sources/SpliceKitBRAW.mm` : stubs `SpliceKit_bootstrapBRAWAtLaunchPhase` et `SpliceKit_handleBRAWAVProbe` dans la branche sans SDK Blackmagic.
-  2. `patcher/patch_fcp.sh` : build via `make all` (la ligne clang embarquée ignorait Sentry) ; détection d'injection sur `@rpath/SpliceKit.framework` (le chemin `~/Applications/SpliceKit` faisait croire à une injection déjà faite) ; `detect_sign_identity` ne renvoie plus deux identités.
-- Signature : identité « Apple Development: Alexandre Bruneau », team U42X6U6LT7.
-- Logs : `~/Library/Logs/SpliceKit/splicekit.log`.
+## SpliceKit maintenance
+- After an App Store update of FCP: `bash install.sh` (or `cd ~/.local/share/splicekit/SpliceKit && ./patcher/patch_fcp.sh`): copy + rebuild + inject + sign. ~7 GB, 3–5 min.
+- Rebuild only: `./patcher/patch_fcp.sh --no-copy`. Uninstall: `--uninstall` (removes `~/Applications/SpliceKit`).
+- Local fixes on v3.3.9 (re-apply after `git pull` until PR #87 is merged): see `splicekit-patches/`.
+- Logs: `~/Library/Logs/SpliceKit/splicekit.log`.
 
-## Dépannage rapide
-- `Cannot connect … 9876` : la copie patchée n'est pas lancée, ou le FCP standard tourne à sa place (`ps -o command= -p $(pgrep -x "Final Cut Pro")`).
-- `No active libraries found` : ouvrir une bibliothèque (`open -a "~/Applications/SpliceKit/Final Cut Pro.app" ~/Movies/Perso.fcpbundle`).
-- Erreurs `attempt to insert nil object` en rafale + pont muet : un dialogue modal (souvent une permission macOS) attend Alexandre.
-- Titre rendu en Helvetica : police absente de `~/Library/Fonts`.
+## Quick troubleshooting
+- `Cannot connect … 9876`: the patched copy is not running, or the stock FCP is (`ps -o command= -p $(pgrep -x "Final Cut Pro")`).
+- `No active libraries found`: open a library (`open -a "~/Applications/SpliceKit/Final Cut Pro.app" ~/Movies/Some.fcpbundle`).
+- Bursts of `attempt to insert nil object` and a silent bridge: a modal dialog (usually a macOS permission) is waiting for the user.
+- Title rendered in Helvetica: the font is missing from `~/Library/Fonts`.
