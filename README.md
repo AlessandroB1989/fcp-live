@@ -35,7 +35,9 @@ brief ──► spec.json ──► build_fcpxml.py ──► FCPXML ──► S
 * `brandkits/baair.json` — example brand kit (baair.solutions).
 * `splicekit-patches/` — the fixes needed to build SpliceKit v3.3.9 from source
   on a Mac without the Blackmagic RAW SDK, plus three `patch_fcp.sh` fixes
-  (Makefile build, injection detection, signing identity).
+  (Makefile build, injection detection, signing identity). Submitted upstream as
+  [elliotttate/SpliceKit#87](https://github.com/elliotttate/SpliceKit/pull/87);
+  the patch file here is only needed until it is merged.
 * `examples/` — calibration and demo specs with the resulting viewer captures.
 * `SKILL.md` — the operating procedure Claude follows (French).
 
