@@ -16,7 +16,11 @@ spec.json:
   "project": "Reel test",
   "width": 1080, "height": 1920, "fps": 24,      # fps: 24, 25, 30, 23.976, 29.97, 60
   "brandkit": "baair",                             # optional, file in ../brandkits
-  "clips": [ {"path": "/abs/clip.mp4", "in": 0.0, "duration": 8.0} ],
+  "clips": [ {"path": "/abs/clip.mp4", "in": 0.0, "duration": 8.0, "volume_db": -12} ],  # volume_db ducks the clip's own audio
+  "audio": [                                       # optional voice-over / music, connected below the storyline
+     {"path": "/abs/voiceover.wav", "start": 0.3, "role": "dialogue", "volume_db": 0},
+     {"path": "/abs/music.mp3",     "start": 0.0, "role": "music",    "volume_db": -12, "duration": 8}
+  ],
   "titles": [
      {"text": "Hook line", "start": 0.5, "duration": 2.5,
       "role": "title",            # brandkit font role: title | signature | body | label
@@ -215,8 +219,44 @@ def build(spec: dict) -> str:
             f'duration="{rational(du)}" start="3600s">{pos_param}'
             f'<text>{text_xml}</text>{defs_xml}</title>')
 
+    # Audio (voice-over, music) as connected audio clips in negative lanes,
+    # anchored to the clip under their start time. Volume via <adjust-volume>.
+    audio_by_clip: dict[int, list[str]] = {}
+    for j, a in enumerate(spec.get("audio", [])):
+        path = os.path.abspath(os.path.expanduser(a["path"]))
+        if not os.path.exists(path):
+            raise SystemExit(f"audio not found: {path}")
+        info = probe(path)
+        a_dur = frames(info["duration"], fd)
+        st = frames(float(a.get("start", 0.0)), fd)
+        du = frames(float(a["duration"]), fd) if "duration" in a else a_dur
+        du = min(du, a_dur)
+        rid = f"ra{j + 1}"
+        name = escape(Path(path).stem)
+        resources.append(
+            f'<asset id="{rid}" name="{name}" uid="{uuid.uuid4().hex.upper()}" start="0s" '
+            f'duration="{rational(a_dur)}" hasVideo="0" hasAudio="1" audioSources="1" '
+            f'audioChannels="{info["channels"] or 2}" audioRate="48000">'
+            f'<media-rep kind="original-media" src={quoteattr(Path(path).as_uri())}/></asset>')
+        target = None
+        for idx, (cs, cd, *_rest) in enumerate(clip_entries):
+            if cs <= st < cs + cd:
+                target = idx
+                break
+        if target is None:
+            raise SystemExit(f"audio '{name}' starts at {a.get('start', 0)}s, outside the clips")
+        offset = st - clip_entries[target][0]
+        lane = -(len(audio_by_clip.get(target, [])) + 1)
+        vol = float(a.get("volume_db", 0))
+        vol_xml = f'<adjust-volume amount="{vol:g}dB"/>' if abs(vol) > 0.01 else ""
+        audio_by_clip.setdefault(target, []).append(
+            f'<asset-clip ref="{rid}" lane="{lane}" offset="{rational(offset)}" name="{name}" '
+            f'start="0s" duration="{rational(du)}" audioRole="{a.get("role", "dialogue")}">{vol_xml}</asset-clip>')
+
     for idx, (cs, cd, rid, name, clip_in) in enumerate(clip_entries):
-        inner = "".join(titles_by_clip.get(idx, []))
+        vol = float(spec["clips"][idx].get("volume_db", 0))
+        vol_xml = f'<adjust-volume amount="{vol:g}dB"/>' if abs(vol) > 0.01 else ""
+        inner = vol_xml + "".join(audio_by_clip.get(idx, [])) + "".join(titles_by_clip.get(idx, []))
         spine.append(
             f'<asset-clip ref="{rid}" offset="{rational(cs)}" name="{name}" start="{rational(clip_in)}" '
             f'duration="{rational(cd)}" format="r1" tcFormat="NDF" audioRole="dialogue">{inner}</asset-clip>')

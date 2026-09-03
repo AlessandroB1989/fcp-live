@@ -69,7 +69,8 @@ A spec is small and readable:
 ```json
 {
   "project": "Demo baair", "width": 1080, "height": 1920, "fps": 24, "brandkit": "baair",
-  "clips": [ {"path": "~/Downloads/clip.mp4", "in": 0, "duration": 8} ],
+  "clips": [ {"path": "~/Downloads/clip.mp4", "in": 0, "duration": 8, "volume_db": -12} ],
+  "audio": [ {"path": "~/Movies/ElevenLabs/hook.mp3", "start": 0.3, "role": "dialogue"} ],
   "titles": [
     {"text": "■", "start": 0.3, "duration": 2.9, "role": "body", "size": 56, "color": "purple", "position": "0 760"},
     {"start": 0.3, "duration": 2.9, "size": 84, "color": "ink_paper", "position": "0 620",
@@ -80,7 +81,7 @@ A spec is small and readable:
 }
 ```
 
-That spec produced the hero image above, untouched.
+That spec (minus the audio line) produced the hero image above, untouched. The audio line connects a voice-over under the storyline and ducks the clip's own sound by 12 dB.
 
 ## Bring your own brand
 
@@ -97,9 +98,9 @@ Copy `brandkits/baair.json`, rename, change the colours and the four font roles,
 
 ## Status and roadmap
 
-Validated 2026-09-03 on FCP 12.3 / macOS 26.5.2 / SpliceKit 3.3.9: internal FCPXML import, brand fonts, mixed-style runs, lanes, positions, viewer verification.
+Validated 2026-09-03 on FCP 12.3 / macOS 26.5.2 / SpliceKit 3.3.9: internal FCPXML import, brand fonts, mixed-style runs, lanes, positions, viewer verification, connected voice-over with ducking.
 
-- [ ] Voice-over round-trip (TTS file → connected audio → ducking)
+- [x] Voice-over round-trip (TTS file → connected lane −1 audio → clip ducked −12 dB)
 - [ ] Caption styling from the brand kit (`set_caption_style`)
 - [ ] Keyframed text animations (Motion params in FCPXML)
 - [ ] 16:9 calibration (YouTube) and a second brand kit
