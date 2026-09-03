@@ -1,0 +1,10 @@
+{
+  "event": "SpliceKit Test", "project": "Calib2 baair",
+  "width": 1080, "height": 1920, "fps": 24, "brandkit": "baair",
+  "clips": [ {"path": "/Users/alexandrebruneau/Downloads/hf_20260806_122634_bbfd525c-ce27-4ce7-89f4-c27492d252c9.mp4", "in": 0.0, "duration": 8.0} ],
+  "titles": [
+    {"text": "Fraunces 96 +800", "start": 1.0, "duration": 4.0, "role": "title", "size": 96, "color": "ink_paper", "position": "0 800"},
+    {"text": "Inter 60 centre violet", "start": 1.0, "duration": 4.0, "role": "body", "size": 60, "color": "purple", "position": "0 0"},
+    {"text": "JETBRAINS 44 -800", "start": 1.0, "duration": 4.0, "role": "label", "size": 44, "color": "ink_paper", "position": "0 -800"}
+  ]
+}

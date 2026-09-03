@@ -1,0 +1,12 @@
+{
+  "event": "SpliceKit Test", "project": "Demo baair",
+  "width": 1080, "height": 1920, "fps": 24, "brandkit": "baair",
+  "clips": [ {"path": "/Users/alexandrebruneau/Downloads/hf_20260806_122634_bbfd525c-ce27-4ce7-89f4-c27492d252c9.mp4", "in": 0.0, "duration": 8.0} ],
+  "titles": [
+    {"text": "■", "start": 0.3, "duration": 2.9, "role": "body", "size": 56, "color": "purple", "position": "0 760"},
+    {"start": 0.3, "duration": 2.9, "size": 84, "color": "ink_paper", "position": "0 620",
+     "runs": [ {"text": "Tools, ", "role": "title"}, {"text": "not decks.", "role": "signature"} ]},
+    {"text": "Le montage, piloté par Claude.", "start": 3.4, "duration": 3.2, "role": "body", "size": 48, "color": "ink_paper", "position": "0 -560"},
+    {"text": "BAAIR.SOLUTIONS", "start": 3.4, "duration": 3.2, "role": "label", "size": 30, "color": "grey_body_dark", "position": "0 -680"}
+  ]
+}

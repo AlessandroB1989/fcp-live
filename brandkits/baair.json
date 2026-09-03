@@ -1,0 +1,38 @@
+{
+  "id": "baair",
+  "name": "baair.solutions",
+  "source": "~/.claude/skills/baair-instagram-carousel/reference/charte.md",
+  "colors": {
+    "ink":       {"hex": "#0A0A0A", "fcp": "0.039 0.039 0.039 1", "role": "texte principal / fond sombre"},
+    "paper":     {"hex": "#FFFFFF", "fcp": "1 1 1 1", "role": "fond clair"},
+    "bone":      {"hex": "#F4F2EC", "fcp": "0.957 0.949 0.925 1", "role": "fond couverture Solutions"},
+    "purple":    {"hex": "#8C57E9", "fcp": "0.549 0.341 0.914 1", "role": "the dot : seul accent, carré, jamais arrondi, un par écran"},
+    "ink_paper": {"hex": "#FAFAF7", "fcp": "0.980 0.980 0.969 1", "role": "texte sur fond sombre"},
+    "grey_meta_light": {"hex": "#6B6B66", "fcp": "0.420 0.420 0.400 1"},
+    "grey_meta_dark":  {"hex": "#8A8A82", "fcp": "0.541 0.541 0.510 1"},
+    "grey_body_dark":  {"hex": "#C9C9C2", "fcp": "0.788 0.788 0.761 1"},
+    "grey_body_light": {"hex": "#3D3D38", "fcp": "0.239 0.239 0.220 1"}
+  },
+  "fonts": {
+    "title":     {"family": "Fraunces", "face": "Bold", "weights": [700, 900], "role": "titres, gros chiffres"},
+    "signature": {"family": "Instrument Serif", "face": "Italic", "role": "le mot-signature dans chaque titre"},
+    "body":      {"family": "Inter", "face": "Regular", "weights": [400, 500, 600, 700], "role": "corps"},
+    "label":     {"family": "JetBrains Mono", "face": "Regular", "role": "étiquettes, méta ; uppercase, letter-spacing 0.12-0.16em"}
+  },
+  "rules": [
+    "Angles à 90° partout, aucun arrondi.",
+    "Un seul carré violet par écran comme accent.",
+    "Pas d'emoji dans les visuels.",
+    "Footer constant : ▪ baair.solutions",
+    "Tagline : Tools, not decks."
+  ],
+  "video": {
+    "reel":  {"width": 1080, "height": 1920, "fps": 30, "safe_margin_px": 96, "caption_zone": "bas, au-dessus des 250px réservés à l'UI Instagram"},
+    "youtube": {"width": 1920, "height": 1080, "fps": 25},
+    "title_sizes_px_1080w": {"hook": 96, "h2": 68, "body": 34, "label": 24}
+  },
+  "motion": {
+    "style": "sec, géométrique, sans rebond ; apparitions par coupe ou fondu 6-8 images ; le carré violet apparaît en premier, le texte ensuite",
+    "durations": {"hook_s": 2.5, "line_s": 2.0, "fade_frames": 8}
+  }
+}
