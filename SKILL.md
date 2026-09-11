@@ -33,15 +33,12 @@ Never launch the patched copy on your own. If a task needs it, say so and let th
 - Brand fonts installed in `~/Library/Fonts` (baair: Fraunces, Instrument Serif, Inter, JetBrains Mono).
 
 ## Safe path — workflow (9:16 reel)
-0. **Profile selection (one AskUserQuestion, up to 3 questions)** unless the brief already names them:
-   - *Branding*: options = the ids in `brandkits/*.json` (`profiles/*.json` gives the default per project).
-   - *Personnage / voix*: options = ClaudeVault `list_characters` (handles like `@AlexandreDenim`, each with HeyGen avatar id and voice ids). Never paste the ids into files; read them from the vault when generating.
-   - *Destination*: options = libraries/events from `raccord_list_libraries` (fallback: the profile's `destination`). This is only a **suggestion** written into the spec's `destination`; the user confirms or changes it in Raccord's dialog at approval.
-   API keys (Higgsfield, ElevenLabs, HeyGen, Kling…) are never asked for and never stored by Raccord: they live in ClaudeVault (`get_api_key`, on demand) and in the connectors themselves.
+0. **Profile window (dialog 1)** — at the start of every video job, unless the user says the profile is already confirmed: call `raccord_setup(profile: <project id>, brandkits: [ids in brandkits/*.json], prefill: {...})`. Prefill from ClaudeVault `list_characters` (character handle, HeyGen avatar id, HeyGen voice id, ElevenLabs voice id when present), the project's `profiles/<id>.json` (brand kit, default event) and the media folder. Raccord opens a form on the user's screen; the call blocks until they save or cancel and returns the saved profile. Use its values for the job (brand kit id, avatar/voice ids for HeyGen/ElevenLabs, media directory). Never pass or store API keys: the schema has no field for them; keys stay in ClaudeVault (`get_api_key`) and the connectors.
+   - *Destination*: put a suggestion in the spec's `destination` (from `raccord_list_libraries` or the profile's default event). The user confirms or changes it in dialog 2.
 1. **Brief**: brand kit, source clip(s) already copied into the companion's media folder (flat, no subfolders), message (hook, 2–4 lines, CTA), length, voice-over yes/no.
-2. **Check**: `raccord_capabilities` → mode must be `review-and-export` (else ask the user to tick "Autoriser les propositions" in the companion); `capture` and `playhead` true when the panel is open and Screen Recording granted; `libraries` true when FCP is running. `raccord_list_media`, `raccord_probe_media(<file>)` for durations and sizes.
+2. **Check**: `raccord_capabilities` (Raccord runs as a menu-bar item; `capture` and `playhead` are true when the FCP panel is open and Screen Recording granted). `raccord_list_media`, `raccord_probe_media(<file>)` for durations and sizes; copy source clips into the profile's media folder first.
 3. **Spec** (see format below): frames at the project fps, brand kit inline (copy the values from `brandkits/<id>.json`), titles in frame pixels, `destination` hint. Run `raccord_validate_edit` until it passes; read `summary.titleLanes` / `fonts` / `destinationHint`.
-4. **Propose**: `raccord_propose_edit` → tell the user: *"Proposition prête dans Raccord : la fenêtre vous demandera la bibliothèque et l'événement, puis cliquez « Exporter et importer »."* Then poll `raccord_get_proposal(id)` until `status == approved` and `imported == true` (15-minute expiry); `destination` in the answer is what the user actually chose. Never claim the import happened before `imported` is true.
+4. **Propose (dialog 2)**: `raccord_propose_edit` → Raccord immediately shows "Importer « <name> » dans Final Cut Pro" with the library and event popups (libraries open in FCP), prefilled from the spec's `destination`. The user clicks *Importer* (= approval + export + hand-off to FCP) or *Annuler* (= rejected). Poll `raccord_get_proposal(id)` until `status` is `approved` with `imported == true`, or `rejected`/`expired` (15 min); `destination` in the answer is what the user chose. Never claim the import happened before `imported` is true.
 5. **Open the project**: ask the user to double-click the imported project (event *Raccord* in the target library). FCP exposes no API to open a project.
 6. **Verify visually**: for each title moment, `raccord_seek_playhead(seconds)` then `raccord_capture_viewer()` and **read the PNG**: font really loaded, no overflow, contrast, one accent element only, safe zones.
 7. **Iterate**: fix the spec and propose again (each approval = a new project version; ask the user to delete the old one if they want).
@@ -75,7 +72,7 @@ Rules: video clips on positive lanes, audio-only on negative lanes; everything s
 Only on explicit request. Procedure, tool names and calibration are in `docs/SKILL.splicekit.md`. Rules: quit the stock FCP first, one FCP at a time, sandbox library, quit the patched copy when done, never export.
 
 ## Troubleshooting (Safe)
-- `Read-only mode`: user must tick the checkbox in the companion.
+- `Raccord is not running` / connection refused: `open -a Raccord` (menu-bar item, no window).
 - `panel unreachable`: open Fenêtre > Extensions > Raccord in FCP (the panel must stay open).
 - `Capture failed … TCC`: grant Screen Recording to Raccord (System Settings > Privacy & Security), relaunch the app.
 - `Open a project in the timeline first`: the user must open a project; the panel only controls the active timeline.
