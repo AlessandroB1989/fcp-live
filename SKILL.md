@@ -1,63 +1,83 @@
 ---
 name: fcp-live
-description: Edit videos in Final Cut Pro live from Claude via the SpliceKit MCP — import footage (Higgsfield, Kling, HeyGen, camera), cut it, lay out titles and motion-design text styled from a project brand kit (fonts, colours, safe zones), add a voice-over, and verify the result visually. Trigger on "edit this video", "put it in Final Cut", "make the reel", "add the titles / motion design", "brand this video", "voice-over", "captions in FCP", any mention of Final Cut, FCP, SpliceKit, timeline, brand kit video — and their French equivalents (« monte cette vidéo », « mets-la dans Final Cut », « fais le montage », « ajoute les textes », « reel baair », « habille cette vidéo »). Export stays manual.
+description: Edit videos in Final Cut Pro from Claude — import footage (Higgsfield, Kling, HeyGen, camera), cut it, lay out titles and motion-design text styled from a project brand kit (fonts, colours, safe zones), add a voice-over, and verify the result visually. Default path is Raccord (formerly SpliceKit Safe) (official FCP, MCP `raccord`, human approval, no injection); the patched-FCP SpliceKit bridge is a reserve tool only. Trigger on "edit this video", "put it in Final Cut", "make the reel", "add the titles / motion design", "brand this video", "voice-over", "captions in FCP", any mention of Final Cut, FCP, SpliceKit, timeline, brand kit video — and their French equivalents (« monte cette vidéo », « mets-la dans Final Cut », « fais le montage », « ajoute les textes », « reel baair », « habille cette vidéo »). Export stays manual.
 ---
 
-# fcp-live — Claude edits Final Cut Pro, live, in your brand
+# fcp-live — Claude edits Final Cut Pro, in your brand
+
+## Two paths, one default
+
+| | **Raccord (default)** | SpliceKit bridge (reserve) |
+|---|---|---|
+| FCP | the official App Store app | a patched copy in `~/Applications/SpliceKit/` |
+| MCP | `raccord` (9 tools) | `splicekit` (~220 tools) |
+| Injection | none | dylib injected (CleanMyMac / EDR alerts) |
+| Writes | new FCPXML, **approved by the user** in the companion app, then imported by FCP | direct, in-process |
+| Reads | panel state, playhead, window screenshot | everything |
+| Use for | producing reels and motion design from a brief (the normal job) | retouching an existing hand-made timeline when the user explicitly asks |
+
+Never launch the patched copy on your own. If a task needs it, say so and let the user decide.
 
 ## What this skill does
-1. **Editing** of generated (Higgsfield, Kling, HeyGen…) or shot footage: import, timeline, cuts, pacing.
-2. **Motion design / text**: hooks, lines, labels, CTAs as connected title clips, styled from the project's **brand kit** (`brandkits/<project>.json`).
-3. **Brand transfer**: the same brief yields a baair reel (Fraunces + purple square + hard corners) or another project's reel, without touching the workflow.
-4. **Voice-over** (ElevenLabs or any TTS) when the brief asks for it.
-5. **Export: never automated.** Claude prepares everything; the user exports (File > Share).
+1. **Editing** of generated or shot footage: clips on lanes, cuts by frame ranges, markers.
+2. **Motion design / text**: hooks, lines, labels, CTAs as connected Basic Title clips styled from the project's **brand kit** (`brandkits/<project>.json`), with linear keyframes (position, scale, rotation, opacity).
+3. **Brand transfer**: same brief, another brand kit, same workflow.
+4. **Voice-over / music**: audio clips on negative lanes with dB gain; clip audio ducked.
+5. **Export: never automated.** The user exports (File > Share).
 
-## Prerequisites
-- Patched FCP: `~/Applications/SpliceKit/Final Cut Pro.app` (copy of FCP 12.x; the App Store app is untouched). Installed by `install.sh`.
-- SpliceKit sources: `~/.local/share/splicekit/SpliceKit` (v3.3.9 + the fixes in `splicekit-patches/`, upstream PR elliotttate/SpliceKit#87).
-- MCP `splicekit` registered in Claude Code (user scope, ~220 tools). The bridge listens on `127.0.0.1:9876` **only while the patched copy is running**.
-- Crash telemetry (Sentry) disabled via `~/Library/Application Support/SpliceKit/SpliceKitSentryConfig.plist`.
-- Fallback client without MCP: `scripts/skbridge.py METHOD '{json}'` (same JSON-RPC protocol).
-- Brand fonts installed in `~/Library/Fonts` (baair: Fraunces, Instrument Serif, Inter, JetBrains Mono — Google Fonts, OFL). A missing font silently falls back to Helvetica.
+## Safe path — prerequisites
+- App installed: `/Applications/Raccord.app` (companion + MCP server + Workflow Extension), built from `MCP & Skills/Raccord` with `python3 build.py install`.
+- MCP `raccord` registered in Claude Code (user scope). Session dir is stable: `~/Library/Application Support/Raccord/session`.
+- Companion running with a media folder and a target library chosen (remembered in its config). Exports land in `~/Movies/Raccord/`.
+- In FCP: **Fenêtre > Extensions > Raccord** panel open (gives playhead control + state). Screen Recording granted to Raccord (for `raccord_capture_viewer`).
+- Brand fonts installed in `~/Library/Fonts` (baair: Fraunces, Instrument Serif, Inter, JetBrains Mono).
 
-## Safety rules
-- **One FCP instance at a time**: quit the stock FCP (AppleScript `quit`, never `kill`) before launching the patched copy.
-- **Sandbox library**: test in a scratch library/event (baair: `Perso` › `SpliceKit Test`). Touch production libraries only on explicit request, on the named project.
-- Before any destructive action (delete, replaceWithGap, bladeAll, batch), list the timeline (`get_timeline_clips`) and say what will change. Undo exists: `history_action("undo")`.
-- A macOS permission dialog (Downloads access, microphone…) **blocks the bridge**: never click it on the user's behalf, ask them to allow it.
-- Never call `share_project` / `batch_export` without an explicit request.
+## Safe path — workflow (9:16 reel)
+0. **Profile selection (one AskUserQuestion, up to 3 questions)** unless the brief already names them:
+   - *Branding*: options = the ids in `brandkits/*.json` (`profiles/*.json` gives the default per project).
+   - *Personnage / voix*: options = ClaudeVault `list_characters` (handles like `@AlexandreDenim`, each with HeyGen avatar id and voice ids). Never paste the ids into files; read them from the vault when generating.
+   - *Destination*: options = libraries/events from `raccord_list_libraries` (fallback: the profile's `destination`). This is only a **suggestion** written into the spec's `destination`; the user confirms or changes it in Raccord's dialog at approval.
+   API keys (Higgsfield, ElevenLabs, HeyGen, Kling…) are never asked for and never stored by Raccord: they live in ClaudeVault (`get_api_key`, on demand) and in the connectors themselves.
+1. **Brief**: brand kit, source clip(s) already copied into the companion's media folder (flat, no subfolders), message (hook, 2–4 lines, CTA), length, voice-over yes/no.
+2. **Check**: `raccord_capabilities` → mode must be `review-and-export` (else ask the user to tick "Autoriser les propositions" in the companion); `capture` and `playhead` true when the panel is open and Screen Recording granted; `libraries` true when FCP is running. `raccord_list_media`, `raccord_probe_media(<file>)` for durations and sizes.
+3. **Spec** (see format below): frames at the project fps, brand kit inline (copy the values from `brandkits/<id>.json`), titles in frame pixels, `destination` hint. Run `raccord_validate_edit` until it passes; read `summary.titleLanes` / `fonts` / `destinationHint`.
+4. **Propose**: `raccord_propose_edit` → tell the user: *"Proposition prête dans Raccord : la fenêtre vous demandera la bibliothèque et l'événement, puis cliquez « Exporter et importer »."* Then poll `raccord_get_proposal(id)` until `status == approved` and `imported == true` (15-minute expiry); `destination` in the answer is what the user actually chose. Never claim the import happened before `imported` is true.
+5. **Open the project**: ask the user to double-click the imported project (event *Raccord* in the target library). FCP exposes no API to open a project.
+6. **Verify visually**: for each title moment, `raccord_seek_playhead(seconds)` then `raccord_capture_viewer()` and **read the PNG**: font really loaded, no overflow, contrast, one accent element only, safe zones.
+7. **Iterate**: fix the spec and propose again (each approval = a new project version; ask the user to delete the old one if they want).
+8. **Handover**: summary, captures, "prêt à exporter".
 
-## Standard workflow (9:16 reel)
-1. **Brief**: project (brand kit), source video, message (hook, 2–4 lines, CTA), target length, voice-over yes/no.
-2. **Bridge**: `bridge_status()`. On error, launch the patched copy (`open ~/Applications/SpliceKit/Final\ Cut\ Pro.app`), wait for port 9876 (~30 s), then check `detect_dialog()`.
-3. **Project**: write a `spec.json` (see `scripts/build_fcpxml.py` docstring) → `python3 scripts/build_fcpxml.py spec.json > reel.fcpxml` → `import_fcpxml(xml, internal=True)`. The project lands in the active library, in the event named by the spec. Then `open_project(name)`.
-   - For an existing project: `import_media(paths, event=…)` then `browser_append_clip(name=…)`.
-4. **Cut**: `get_timeline_clips()` → `blade_at_times`, `timeline_action("delete")`, `trim_clips_to_beats` with music, `apply_transition` sparingly (baair: hard cuts, fades of 6–8 frames max).
-5. **Text / motion design**: titles are connected clips generated by `build_fcpxml.py` with a brand-kit `role` (title / signature / body / label) and `color`; `size` and `position` in **frame pixels from centre, y up** (`"0 620"` = hook near the top, `"0 -560"` = bottom; safe zones below). Simultaneous titles get their own lanes automatically. To tweak: `select_clip_in_lane(n)` → `set_inspector_property("positionY", …)`; `get_title_text()` to check font/size.
-6. **Mandatory visual check**: `seek_to_time` on each title → `capture_viewer()` → read the PNG. Check: font actually loaded, overflow, contrast, one accent element only.
-7. **Voice-over / music** (optional): generate the audio (ElevenLabs MCP `generate_tts` writes to `~/Movies/ElevenLabs`; any TTS or a `say` placeholder works), then declare it in the spec's `"audio"` list (`start`, `role`, `volume_db`) and set `"volume_db": -12` on the clips whose own sound must sit under the voice. `build_fcpxml.py` connects it as a lane −1 audio clip with `<adjust-volume>`; verified on FCP 12.3 (export shows the −12 dB adjustment). For an already-open project use `import_media(path)` + `browser_append_clip` + `timeline_action("connectToPrimaryStoryline")` and `mixer_set_volume`.
-8. **Captions** if requested: `generate_captions` (style via `set_caption_style`, brand-kit font) or `import_srt_as_markers`.
-9. **Handover**: timeline summary (`analyze_timeline`), captures, and the reminder: "ready to export".
+## Safe spec format (`raccord_validate_edit` / `raccord_propose_edit` → `edit`)
+```json
+{ "name": "Reel baair — hook", "width": 1080, "height": 1920, "fps": "24", "durationFrames": 192,
+  "destination": { "library": "Perso", "event": "Reels 2026" },
+  "brandkit": { "id": "baair", "templateScale": 2.0,
+    "colors": [{"name":"ink_paper","hex":"#FAFAF7"},{"name":"purple","hex":"#8C57E9"},{"name":"grey_body_dark","hex":"#C9C9C2"}],
+    "fonts": [{"role":"title","family":"Fraunces","face":"Bold"},{"role":"signature","family":"Instrument Serif","face":"Italic"},
+              {"role":"body","family":"Inter","face":"Regular"},{"role":"label","family":"JetBrains Mono","face":"Regular"}] },
+  "clips": [ {"media":"clip.mp4","name":"Plan 1","offsetFrames":0,"sourceStartFrames":0,"durationFrames":192,"lane":1,"audioOnly":false,"volumeDB":-12},
+             {"media":"voix.wav","name":"Voix","offsetFrames":7,"sourceStartFrames":0,"durationFrames":160,"lane":-1,"audioOnly":true} ],
+  "titles": [ {"text":"■","offsetFrames":7,"durationFrames":70,"role":"body","size":56,"color":"purple","position":{"x":0,"y":760}},
+              {"runs":[{"text":"Tools, ","role":"title"},{"text":"not decks.","role":"signature"}],"offsetFrames":7,"durationFrames":70,"size":84,"color":"ink_paper","position":{"x":0,"y":620}},
+              {"text":"BAAIR.SOLUTIONS","offsetFrames":82,"durationFrames":77,"role":"label","size":30,"color":"grey_body_dark","position":{"x":0,"y":-680},
+               "keyframes":[{"frame":0,"x":0,"y":0,"scale":1,"rotation":0,"opacity":0},{"frame":8,"x":0,"y":0,"scale":1,"rotation":0,"opacity":1}]} ],
+  "markers": [ {"frame":7,"text":"Hook"} ] }
+```
+Rules: video clips on positive lanes, audio-only on negative lanes; everything sits above an empty base (not a magnetic storyline); titles without `lane` get the lowest free lane automatically; `size` and `position` are **frame pixels from centre, y up** (the engine divides by `templateScale`, 2.0 on FCP 12.3); `color` is a brand-kit colour name or `#RRGGBB`; a title needs `text` or `runs`, and `size` (or legacy `fontSize`). Keyframes are clip-relative frames, strictly increasing. Fonts must be installed on the Mac; a missing font silently becomes Helvetica.
 
-## Brand kit → FCP (calibrated 2026-09-03, FCP 12.3, 1080×1920 project)
-- File: `brandkits/<id>.json` (hex colours + FCP "r g b a" values, fonts per role, rules, video formats, motion style). New project: copy `baair.json`, change id/colours/fonts; nothing else moves.
-- baair: `ink #0A0A0A`, `ink_paper #FAFAF7`, `purple #8C57E9` (the only accent, a square, never rounded), Fraunces 700/900 titles, Instrument Serif italic signature word, Inter body, JetBrains Mono uppercase labels.
-- **Titles = "Basic Title" + `<text-style>`**: fonts installed in `~/Library/Fonts` load correctly (Fraunces Bold, Instrument Serif Italic, Inter, JetBrains Mono verified in the viewer).
-- **Motion template space = 2× frame pixels**: `build_fcpxml.py` takes `size` and `position` in frame pixels and divides by `template_scale` (2.0). Measured: position "0 800" lands ~740 px above centre, "0 −800" ~700 px below; size 96 px renders ≈ 97 px.
-- **Simultaneous titles → distinct lanes** (automatic). Two titles in the same lane at the same time: FCP renders only one, with no error.
-- **Runs**: one line can mix styles (`"runs": [{"text":"Tools, ","role":"title"},{"text":"not decks.","role":"signature"}]`).
-- **Accent square**: a title "■" (U+25A0) in `purple`, 56 px, 140 px above the hook. Verified.
-- Reel safe zones: hook at y ≈ +620 (under the status bar), body/label at y ≈ −560 / −680 (above the Instagram UI). Nothing below −760.
-- FCPXML position key for Basic Title: `9999/999166631/999166633/1/100/101` (Transform > Position). The "Content Position" key `9999/10003/1/100/101` used by SpliceKit's caption engine belongs to another template and is ignored here.
+## Brand kit → FCP (calibrated 2026-09-03, FCP 12.3, 1080×1920)
+- `brandkits/<id>.json` holds colours, fonts per role (title / signature / body / label), safe zones and motion style; copy its colours and fonts into the spec's `brandkit`.
+- Reel safe zones: hook at y ≈ +620, accent square at +760, body/label at y ≈ −560 / −680. Nothing below −760.
+- Simultaneous titles must be on distinct lanes (automatic). Mixed styles on one line: `runs`.
+- Accent square: title "■" (U+25A0) in `purple`, 56 px.
 
-## SpliceKit maintenance
-- After an App Store update of FCP: `bash install.sh` (or `cd ~/.local/share/splicekit/SpliceKit && ./patcher/patch_fcp.sh`): copy + rebuild + inject + sign. ~7 GB, 3–5 min.
-- Rebuild only: `./patcher/patch_fcp.sh --no-copy`. Uninstall: `--uninstall` (removes `~/Applications/SpliceKit`).
-- Local fixes on v3.3.9 (re-apply after `git pull` until PR #87 is merged): see `splicekit-patches/`.
-- Logs: `~/Library/Logs/SpliceKit/splicekit.log`.
+## Reserve path — SpliceKit bridge
+Only on explicit request. Procedure, tool names and calibration are in `docs/SKILL.splicekit.md`. Rules: quit the stock FCP first, one FCP at a time, sandbox library, quit the patched copy when done, never export.
 
-## Quick troubleshooting
-- `Cannot connect … 9876`: the patched copy is not running, or the stock FCP is (`ps -o command= -p $(pgrep -x "Final Cut Pro")`).
-- `No active libraries found`: open a library (`open -a "~/Applications/SpliceKit/Final Cut Pro.app" ~/Movies/Some.fcpbundle`).
-- Bursts of `attempt to insert nil object` and a silent bridge: a modal dialog (usually a macOS permission) is waiting for the user.
-- Title rendered in Helvetica: the font is missing from `~/Library/Fonts`.
+## Troubleshooting (Safe)
+- `Read-only mode`: user must tick the checkbox in the companion.
+- `panel unreachable`: open Fenêtre > Extensions > Raccord in FCP (the panel must stay open).
+- `Capture failed … TCC`: grant Screen Recording to Raccord (System Settings > Privacy & Security), relaunch the app.
+- `Open a project in the timeline first`: the user must open a project; the panel only controls the active timeline.
+- `raccord_list_libraries` fails with an Automation message: the user must allow Raccord to control Final Cut Pro (System Settings > Privacy & Security > Automation), once. The approval dialog still works without it (fallback library + typed event).
+- Import landed in the wrong place: the user picks library and event in the dialog at every approval; the previous choice is prefilled.

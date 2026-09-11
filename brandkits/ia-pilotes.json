@@ -1,0 +1,38 @@
+{
+  "id": "ia-pilotes",
+  "name": "IA Pilotes (Baair.academy)",
+  "source": "~/Projects/ia-pilotes/design.md (palette CLAUDE.md du 3 septembre 2026)",
+  "colors": {
+    "canvas":   {"hex": "#F7F9FC", "fcp": "0.969 0.976 0.988 1", "role": "fond de toutes les scènes"},
+    "panel":    {"hex": "#EDF1F7", "fcp": "0.929 0.945 0.969 1", "role": "cartes, cartons"},
+    "ink":      {"hex": "#1E2A38", "fcp": "0.118 0.165 0.220 1", "role": "texte principal"},
+    "ink_soft": {"hex": "#5A6575", "fcp": "0.353 0.396 0.459 1", "role": "texte secondaire"},
+    "blue":     {"hex": "#6B9BD2", "fcp": "0.420 0.608 0.824 1", "role": "accent COMMANDES (ch. 1–3), bleu Baair.academy"},
+    "green":    {"hex": "#3F7D6B", "fcp": "0.247 0.490 0.420 1", "role": "accent INTENDANCE (ch. 4–7)"},
+    "ochre":    {"hex": "#B0782B", "fcp": "0.690 0.471 0.169 1", "role": "accent TRANSMISSION (ch. 8–10)"},
+    "violet":   {"hex": "#5A4E9C", "fcp": "0.353 0.306 0.612 1", "role": "accent COMMANDES FINALES (ch. 11–12)"},
+    "blue_light": {"hex": "#DCE8F5", "fcp": "0.863 0.910 0.961 1", "role": "halo / fond avatar commandes"},
+    "alert":    {"hex": "#B8312F", "fcp": "0.722 0.192 0.184 1", "role": "piège du jour uniquement"}
+  },
+  "fonts": {
+    "title":     {"family": "Fredoka", "face": "Bold", "weights": [600, 700], "role": "titres, cartons, incrustations"},
+    "signature": {"family": "Fredoka", "face": "SemiBold", "role": "mot mis en avant"},
+    "body":      {"family": "Atkinson Hyperlegible", "face": "Bold", "weights": [400, 700], "role": "sous-titres, texte courant (65–80 ans)"},
+    "label":     {"family": "JetBrains Mono", "face": "Regular", "role": "minuteur, prompts, noms de dossiers"}
+  },
+  "rules": [
+    "Coins arrondis 24 px sur les cartes, pastilles 999 px.",
+    "Une seule couleur d'accent par module (celle de l'acte).",
+    "8 mots maximum à l'écran, 56 px minimum en 1080p. Aucun robot, aucun visage réel autre que François.",
+    "Sous-titres : Atkinson Hyperlegible Bold 52 px, encre sur bandeau canvas 94 %, bas de cadre, 5 mots max.",
+    "Présentateur François (avatar photo HeyGen), fond blanc, logo IA Pilotes en haut à gauche."
+  ],
+  "video": {
+    "module": {"width": 1920, "height": 1080, "fps": 30, "safe_margin_px": 64},
+    "title_sizes_px_1080h": {"hook": 96, "h2": 72, "body": 56, "label": 56}
+  },
+  "motion": {
+    "style": "posé, arrondi ; entrées 0,4–0,7 s, sorties 0,3 s ; fondus 0,5 s entre segments ; aucun zoom brusque",
+    "durations": {"intro_s": 4, "outro_s": 4, "fade_s": 0.5}
+  }
+}

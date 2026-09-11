@@ -17,15 +17,15 @@ You generate a clip with Higgsfield, Kling or HeyGen. You say *"make the baair r
 
 No cloud editor. No FCPXML round-trips by hand. No footage leaving the Mac.
 
-## Why this exists
+## Two ways in, one default
 
-| Approach | What Claude can do | What it can't |
-|---|---|---|
-| FCPXML round-trip (export → edit XML → import) | structural edits, markers, rough cuts | see the result, act while you edit |
-| AppleScript / UI scripting | menus, shortcuts | anything reliable in a non-English UI |
-| **SpliceKit in-process bridge (this)** | import, cut, titles, effects, inspector, **viewer capture** | export (on purpose) |
+| Approach | What Claude can do | What it can't | Security posture |
+|---|---|---|---|
+| **Raccord (default since 2026-09-11)** | brand-kit titles, keyframes, audio lanes → FCPXML with `import-options`; the user approves in a companion app; official FCP imports; panel gives playhead + state; window capture for verification | edit an existing timeline in place (each iteration is a new project); open a project | official Apple Workflow Extension SDK, App Sandbox, no injection, no network, human approval gate |
+| SpliceKit bridge (reserve) | import, cut, titles, effects, inspector, viewer capture, ~220 tools | export (on purpose) | dylib injected into a re-signed copy of FCP; trips EDR/CleanMyMac; unauthenticated local port while running |
+| FCPXML round-trip by hand | structural edits, markers | see the result | none needed |
 
-[SpliceKit](https://github.com/elliotttate/SpliceKit) loads a dylib into a re-signed **copy** of Final Cut Pro and exposes ~220 MCP tools. fcp-live is the layer that makes those tools produce **on-brand** video: a brand kit, a frame-accurate FCPXML generator for titles, a Claude Code skill with the operating procedure, and the installer that makes the whole thing reproducible on a clean Mac.
+The Safe engine lives in the sibling project `Raccord` (Swift, no dependencies, 22 tests). fcp-live is the layer on top: brand kits, calibrated title values, the operating procedure Claude follows, and the SpliceKit reserve path for the rare retouch that Apple's public API cannot express.
 
 ## What you get
 

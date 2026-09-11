@@ -1,0 +1,11 @@
+{
+  "id": "baair",
+  "label": "baair.solutions — reels et formations",
+  "brandkit": "baair",
+  "character": "@AlexandreDenim",
+  "voice": {"provider": "elevenlabs", "vaultKey": "ElevenLabs", "voiceName": "à choisir dans list_voices"},
+  "avatar": {"provider": "heygen", "fromVault": true},
+  "video": {"format": "reel", "width": 1080, "height": 1920, "fps": "24"},
+  "destination": {"library": "Perso", "event": "Raccord"},
+  "notes": "Les identifiants d'avatar et de voix ne sont jamais copiés ici : Claude les lit dans ClaudeVault (list_characters) au moment de produire. Les clés API restent dans ClaudeVault et dans les connecteurs (Higgsfield, HeyGen, ElevenLabs, Kling) ; Raccord n'en a besoin d'aucune."
+}

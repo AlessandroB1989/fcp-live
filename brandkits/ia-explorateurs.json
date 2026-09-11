@@ -1,0 +1,36 @@
+{
+  "id": "ia-explorateurs",
+  "name": "IA Explorateurs (Baair.academy)",
+  "source": "~/Projects/ia-explorateurs/design.md",
+  "colors": {
+    "canvas":   {"hex": "#FBF7F0", "fcp": "0.984 0.969 0.941 1", "role": "fond de toutes les scènes"},
+    "panel":    {"hex": "#F1EAE0", "fcp": "0.945 0.918 0.878 1", "role": "cartes, cartons"},
+    "ink":      {"hex": "#1F2A44", "fcp": "0.122 0.165 0.267 1", "role": "texte principal"},
+    "ink_soft": {"hex": "#5B6478", "fcp": "0.357 0.392 0.471 1", "role": "texte secondaire"},
+    "blue":     {"hex": "#2563EB", "fcp": "0.145 0.388 0.922 1", "role": "accent FONDATIONS (ch. 1–3)"},
+    "orange":   {"hex": "#F26B3A", "fcp": "0.949 0.420 0.227 1", "role": "accent MÉDIAS (ch. 4–7)"},
+    "green":    {"hex": "#1FA37A", "fcp": "0.122 0.639 0.478 1", "role": "accent PROJET (ch. 8–12)"},
+    "blue_light": {"hex": "#DCE8FF", "fcp": "0.863 0.910 1 1", "role": "halo / fond avatar fondations"},
+    "alert":    {"hex": "#D93025", "fcp": "0.851 0.188 0.145 1", "role": "piège du jour uniquement"}
+  },
+  "fonts": {
+    "title":     {"family": "Fredoka", "face": "Bold", "weights": [600, 700], "role": "titres, cartons, étiquettes de personnages"},
+    "signature": {"family": "Fredoka", "face": "SemiBold", "role": "mot mis en avant"},
+    "body":      {"family": "Atkinson Hyperlegible", "face": "Bold", "weights": [400, 700], "role": "sous-titres, texte courant (12 ans)"},
+    "label":     {"family": "JetBrains Mono", "face": "Regular", "role": "minuteur, prompts, chiffres"}
+  },
+  "rules": [
+    "Coins arrondis 24 px sur les cartes, pastilles 999 px.",
+    "Une seule couleur d'accent par module (celle de l'acte).",
+    "12 mots maximum à l'écran. Aucun robot, aucun visage réel.",
+    "Sous-titres : Atkinson Hyperlegible Bold 44 px, encre sur bandeau canvas 92 %, bas de cadre, 5 mots max."
+  ],
+  "video": {
+    "module": {"width": 1920, "height": 1080, "fps": 30, "safe_margin_px": 64},
+    "title_sizes_px_1080h": {"hook": 96, "h2": 64, "body": 44, "label": 32}
+  },
+  "motion": {
+    "style": "chaleureux, arrondi ; entrées 0,3–0,6 s, sorties 0,25 s ; fondus 0,5 s entre segments ; un mouvement ambiant par scène",
+    "durations": {"intro_s": 4, "outro_s": 4, "fade_s": 0.5}
+  }
+}
