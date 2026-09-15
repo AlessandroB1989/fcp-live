@@ -29,7 +29,8 @@ The Safe engine lives in the sibling project `Raccord` (Swift, no dependencies, 
 
 ## What you get
 
-- **`install.sh`** — one command: clones SpliceKit, applies the build fixes, patches a copy of FCP, sets up the MCP server, registers it in Claude Code, installs the example brand fonts, links the skill. Idempotent; re-run after an FCP update.
+- **Raccord** (sibling project `Raccord/`, `python3 build.py install`) — the default engine: menu-bar app, official Workflow Extension, MCP `raccord`, two dialogs (profile, destination). No injection.
+- **`install-splicekit-reserve.sh`** — the *reserve* path only: clones SpliceKit, applies the build fixes, patches a copy of FCP, registers MCP `splicekit`. Run it only if you need in-place retouching of an existing timeline; it trips EDR/CleanMyMac by design.
 - **`SKILL.md`** — the procedure Claude follows: bridge check, spec → FCPXML → import, cut, titles, mandatory viewer verification, voice-over, captions, handover. Safety rules included (one FCP instance, sandbox library, no export). French version in `docs/SKILL.fr.md`.
 - **`scripts/build_fcpxml.py`** — brand-kit-driven FCPXML 1.11 generator. Titles are Basic Title instances with `<text-style>` runs. You write sizes and positions in **frame pixels**; it handles Motion's 2× template space, rational frame timing, and puts simultaneous titles in distinct lanes (FCP silently drops overlaps in one lane).
 - **`scripts/skbridge.py`** — 60-line JSON-RPC client for the bridge. Script anything without the MCP layer.
@@ -41,16 +42,19 @@ The Safe engine lives in the sibling project `Raccord` (Swift, no dependencies, 
 
 ```bash
 git clone https://github.com/AlessandroB1989/fcp-live.git
-cd fcp-live && bash install.sh
+ln -sfn "$PWD/fcp-live" ~/.claude/skills/fcp-live
+cd ../Raccord && python3 build.py install        # builds, signs (Apple Development) and installs /Applications/Raccord.app
+claude mcp add raccord -s user -- "/Applications/Raccord.app/Contents/MacOS/raccord-mcp" \
+    --session "$HOME/Library/Application Support/Raccord/session"
 ```
 
-Needs macOS 14+, Final Cut Pro 12 (App Store), Xcode command line tools, Python 3.10+, `ffmpeg`, ~12 GB free and, ideally, an Apple Development signing identity. Takes 3–5 minutes; your App Store FCP is never modified.
+Needs macOS 14+, Final Cut Pro 12 (App Store), Xcode 27 with the Workflow Extension SDK 1.0.3, an Apple Development signing identity, and the brand fonts in `~/Library/Fonts`. Your App Store FCP is never modified.
 
-Then: quit the stock FCP, open `~/Applications/SpliceKit/Final Cut Pro.app`, open a library, accept the macOS permission prompts, restart Claude Code and ask:
+Then: open Raccord (menu-bar item), open Final Cut Pro with your library and its panel (Fenêtre › Extensions › Raccord), grant the two one-time permissions macOS asks for (Automation of Final Cut Pro, Screen Recording), and ask Claude:
 
 > Make a 9:16 reel from `~/Downloads/clip.mp4` with the baair brand kit. Hook: "Tools, not decks." Body: "Le montage, piloté par Claude." Label: BAAIR.SOLUTIONS.
 
-Claude will import, place four titles, capture the viewer at each one, show you the frames, and stop before export.
+Claude opens the profile dialog (you confirm brand kit, character, voice), proposes the edit, you pick the library and event and click *Importer*; FCP imports the project; Claude captures the viewer at each title and shows you the frames. Export stays yours.
 
 ## How a reel is built
 
@@ -94,7 +98,7 @@ Copy `brandkits/baair.json`, rename, change the colours and the four font roles,
 - Two connected titles in the **same lane at the same time** import fine and render only one. No warning.
 - A macOS permission dialog freezes the bridge: every call returns `attempt to insert nil object`. Click *Allow*, it resumes.
 - SpliceKit's `patch_fcp.sh` v2.0.0 could not build v3.3.9 on a clean machine; see `splicekit-patches/` and PR #87.
-- SpliceKit ships Sentry crash reporting with `sendDefaultPii`. `install.sh` turns it off before first launch.
+- SpliceKit ships Sentry crash reporting with `sendDefaultPii`. `install-splicekit-reserve.sh` turns it off before first launch.
 
 ## Status and roadmap
 

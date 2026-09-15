@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# fcp-live installer — sets up SpliceKit (patched copy of Final Cut Pro), the
-# MCP server, the Claude Code skill, and optional brand fonts.
+# fcp-live RESERVE installer — sets up the SpliceKit bridge (dylib injected into a patched copy of
+# Final Cut Pro). This is NOT the default path: Raccord is (see ../Raccord). Use only when you need
+# in-place retouching of an existing timeline and accept the EDR/antivirus alerts it triggers.
 #
 #   bash install.sh            # everything
 #   bash install.sh --no-fonts # skip Google Fonts download
