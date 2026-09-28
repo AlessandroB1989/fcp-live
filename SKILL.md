@@ -10,13 +10,15 @@ description: Edit videos in Final Cut Pro from Claude — import footage (Higgsf
 | | **Raccord (default)** | SpliceKit bridge (reserve) |
 |---|---|---|
 | FCP | the official App Store app | a patched copy in `~/Applications/SpliceKit/` |
-| MCP | `raccord` (9 tools) | `splicekit` (~220 tools) |
+| MCP | `raccord` (13 tools) | `splicekit` (~220 tools) |
 | Injection | none | dylib injected (CleanMyMac / EDR alerts) |
 | Writes | new FCPXML, **approved by the user** in the companion app, then imported by FCP | direct, in-process |
 | Reads | panel state, playhead, window screenshot | everything |
 | Use for | producing reels and motion design from a brief (the normal job) | retouching an existing hand-made timeline when the user explicitly asks |
 
 Never launch the patched copy on your own. If a task needs it, say so and let the user decide.
+
+**Raccord is the primary tool for editing jobs (decision of 2026-09-28).** The procedure is model-independent; it was written to take advantage of Claude Opus 5.5 (`claude-opus-5-5`), whose faster output and more economical tool use make several propose → import → capture → correct iterations per reel practical. Two things do not change with the model: the user approves every import in Raccord's destination dialog, and every title is checked on a viewer capture before handover.
 
 ## What this skill does
 1. **Editing** of generated or shot footage: clips on lanes, cuts by frame ranges, markers.
