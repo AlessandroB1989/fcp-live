@@ -77,6 +77,9 @@ Only on explicit request. Procedure, tool names and calibration are in `docs/SKI
 - `Raccord is not running` / connection refused: `open -a Raccord` (menu-bar item, no window).
 - `panel unreachable`: open Fenêtre > Extensions > Raccord in FCP (the panel must stay open).
 - `Capture failed … TCC`: grant Screen Recording to Raccord (System Settings > Privacy & Security), relaunch the app.
-- `Open a project in the timeline first`: the user must open a project; the panel only controls the active timeline.
+- `Open a project in the timeline first`: the user must open a project; the panel only controls the active timeline. `sequence` may come back empty on FCP 12.3 even with a project open (Apple's `activeSequence` is nil there) — trust `durationSeconds` > 0 instead.
+- Capture shows the wrong frame after a seek: the viewer follows the playhead only when the **timeline has focus** (click in the timeline once; with the browser focused the viewer shows the browser selection). The companion already waits 0.8 s after each seek for the viewer to redraw.
+- `No Final Cut Pro window is on screen`: the FCP window is minimized in the Dock or on another Space; restore it.
+- After reinstalling Raccord (`build.py install`) the FCP panel process is killed: reopen Fenêtre > Extensions > Raccord. The `raccord` MCP process of a running Claude Code session keeps the old binary until the session restarts.
 - `raccord_list_libraries` fails with an Automation message: the user must allow Raccord to control Final Cut Pro (System Settings > Privacy & Security > Automation), once. The approval dialog still works without it (fallback library + typed event).
 - Import landed in the wrong place: the user picks library and event in the dialog at every approval; the previous choice is prefilled.
