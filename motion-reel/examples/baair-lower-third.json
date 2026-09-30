@@ -1,0 +1,33 @@
+{
+  "$schema": "../spec.schema.json",
+  "name": "baair-lower-third",
+  "title": "Lower third — Alexandre Bruneau",
+  "brandkit": "baair",
+  "format": "16x9",
+  "fps": 25,
+  "duration": 5,
+  "seed": 1,
+  "beats": [0, 0.24, 0.48, 0.8, 4.2, 5],
+  "shots": [
+    {"name": "Lower third", "t0": 0, "t1": 5}
+  ],
+  "preview": {"background": "ink"},
+  "layers": [
+    {"id": "accent", "type": "square", "size": 32, "color": "purple", "accent": true},
+    {"id": "name", "type": "text", "size": 64, "color": "ink_paper", "align": "left", "revealFrom": "left",
+     "runs": [{"text": "Alexandre ", "role": "title"}, {"text": "Bruneau", "role": "signature"}]},
+    {"id": "rule", "type": "line", "length": 560, "thickness": 3, "color": "grey_body_dark", "revealFrom": "left"},
+    {"id": "role", "type": "text", "text": "Fondateur · baair.solutions", "role": "label", "case": "upper", "tracking": 0.14,
+     "size": 26, "color": "grey_body_dark", "align": "left"}
+  ],
+  "states": [
+    {"layer": "accent", "t0": 0, "t1": 0, "to": {"x": -790, "y": -300, "opacity": 1}, "easing": {"type": "cut"}},
+    {"layer": "name", "t0": 0.24, "t1": 0.94, "from": {"x": -750, "y": -300, "reveal": 0}, "to": {"reveal": 1}, "easing": {"type": "spring", "zeta": 1, "omega": 14}},
+    {"layer": "rule", "t0": 0.48, "t1": 0.88, "from": {"x": -470, "y": -352, "reveal": 0}, "to": {"reveal": 1}, "easing": {"type": "linear"}},
+    {"layer": "role", "t0": 0.8, "t1": 1.12, "from": {"x": -750, "y": -392, "opacity": 0}, "to": {"opacity": 1}, "easing": {"type": "linear"}},
+    {"layer": "accent", "t0": 4.2, "t1": 4.52, "to": {"opacity": 0}, "easing": {"type": "linear"}},
+    {"layer": "name", "t0": 4.2, "t1": 4.52, "to": {"opacity": 0}, "easing": {"type": "linear"}},
+    {"layer": "rule", "t0": 4.2, "t1": 4.52, "to": {"opacity": 0}, "easing": {"type": "linear"}},
+    {"layer": "role", "t0": 4.2, "t1": 4.52, "to": {"opacity": 0}, "easing": {"type": "linear"}}
+  ]
+}

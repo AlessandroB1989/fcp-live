@@ -10,6 +10,7 @@
   <img alt="Final Cut Pro 12" src="https://img.shields.io/badge/Final%20Cut%20Pro-12.x-8C57E9">
   <img alt="macOS 14+" src="https://img.shields.io/badge/macOS-14%2B-0A0A0A">
   <img alt="Claude Code skill" src="https://img.shields.io/badge/Claude%20Code-skill%20%2B%20MCP-8C57E9">
+  <img alt="motion-reel validated 2026-09-30" src="https://img.shields.io/badge/motion--reel-valid%C3%A9%20le%2030%2F09%2F2026-8C57E9">
   <a href="https://github.com/elliotttate/SpliceKit"><img alt="Powered by SpliceKit" src="https://img.shields.io/badge/powered%20by-SpliceKit-0A0A0A"></a>
 </p>
 
@@ -25,7 +26,7 @@ No cloud editor. No FCPXML round-trips by hand. No footage leaving the Mac.
 | SpliceKit bridge (reserve) | import, cut, titles, effects, inspector, viewer capture, ~220 tools | export (on purpose) | dylib injected into a re-signed copy of FCP; trips EDR/CleanMyMac; unauthenticated local port while running |
 | FCPXML round-trip by hand | structural edits, markers | see the result | none needed |
 
-The Safe engine lives in the sibling project `Raccord` (Swift, no dependencies, 22 tests). fcp-live is the layer on top: brand kits, calibrated title values, the operating procedure Claude follows, and the SpliceKit reserve path for the rare retouch that Apple's public API cannot express.
+The Safe engine lives in the sibling project `Raccord` (Swift, no dependencies, 26 tests). fcp-live is the layer on top: brand kits, calibrated title values, the operating procedure Claude follows, and the SpliceKit reserve path for the rare retouch that Apple's public API cannot express.
 
 ## What you get
 
@@ -87,6 +88,12 @@ A spec is small and readable:
 
 That spec (minus the audio line) produced the hero image above, untouched. The audio line connects a voice-over under the storyline and ducks the clip's own sound by 12 dB.
 
+## Motion design
+
+`motion-reel/` is a second skill for animated sequences such as hooks, intros, lower thirds and end cards. It works as code, not as templates. A spec lists layers and their start → end states on a beat grid, and `draw(ctx, t)` is a pure function rendered frame by frame in headless Chromium. The result is a ProRes 4444 file with alpha, written to Raccord's media folder, so fcp-live can lay it over the footage on lane 2.
+House rules (`motion-reel/CLAUDE.md`) ban timers, unseeded randomness, default ease-in-out, gradients and silent font fallbacks. Every render also produces a 12-frame contact sheet that Claude reads and critiques before handing over.
+`python3 motion-reel/scripts/render.py motion-reel/examples/baair-hook.json` takes about 5 s for 4 s of 9:16. `python3 motion-reel/scripts/check.py` runs 17 checks, covering determinism, fonts, the schema and the rules.
+
 ## Bring your own brand
 
 Copy `brandkits/baair.json`, rename, change the colours and the four font roles, install the fonts in `~/Library/Fonts`. Everything else — spec format, lanes, safe zones, verification loop — stays the same. One brand kit per client; one skill.
@@ -106,7 +113,7 @@ Validated 2026-09-03 on FCP 12.3 / macOS 26.5.2 / SpliceKit 3.3.9: internal FCPX
 
 - [x] Voice-over round-trip (TTS file → connected lane −1 audio → clip ducked −12 dB)
 - [ ] Caption styling from the brand kit (`set_caption_style`)
-- [ ] Keyframed text animations (Motion params in FCPXML)
+- [x] Keyframed text animations (linear keyframes in Raccord specs; springs and morphs via `motion-reel`)
 - [ ] 16:9 calibration (YouTube) and a second brand kit
 - [ ] Batch: N clips → N reels from one brief
 

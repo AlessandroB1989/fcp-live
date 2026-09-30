@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "motion-reel/spec.schema.json",
+  "title": "motion-reel spec",
+  "description": "A deterministic motion-design sequence: layers (what) + states (how they move) on a beat grid. Pixels of the target format, from the centre, y up (same convention as Raccord). Colours are brand-kit colour names (or #RRGGBB), fonts are brand-kit roles.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "brandkit", "format", "duration", "beats", "shots", "layers", "states"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,60}$", "description": "slug, used in output file names"},
+    "title": {"type": "string", "maxLength": 200},
+    "brandkit": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,60}$"},
+    "format": {"enum": ["9x16", "1x1", "16x9"]},
+    "fps": {"type": "integer", "minimum": 12, "maximum": 60, "description": "defaults to the brand kit (video.reel.fps, else video.module.fps); set it to the timeline fps"},
+    "duration": {"type": "number", "exclusiveMinimum": 0, "maximum": 60},
+    "seed": {"type": "integer", "minimum": 0, "maximum": 4294967295},
+    "beats": {"type": "array", "minItems": 2, "maxItems": 200, "items": {"type": "number", "minimum": 0}},
+    "shots": {
+      "type": "array", "minItems": 1, "maxItems": 50,
+      "items": {"type": "object", "additionalProperties": false, "required": ["name", "t0", "t1"],
+        "properties": {"name": {"type": "string", "maxLength": 60}, "t0": {"type": "number", "minimum": 0}, "t1": {"type": "number", "exclusiveMinimum": 0}}}
+    },
+    "background": {"$ref": "#/$defs/color", "description": "fills every frame (opaque output). Omit for alpha."},
+    "preview": {"type": "object", "additionalProperties": false,
+      "properties": {"background": {"$ref": "#/$defs/color", "description": "backdrop of the contact sheet and the H.264 control file; also used for the contrast check"}}},
+    "layers": {"type": "array", "minItems": 1, "maxItems": 40, "items": {"$ref": "#/$defs/layer"}},
+    "states": {"type": "array", "minItems": 1, "maxItems": 400, "items": {"$ref": "#/$defs/state"}}
+  },
+  "$defs": {
+    "color": {"type": "string", "pattern": "^(#[0-9A-Fa-f]{6}|[a-z][a-z0-9_]{0,40})$"},
+    "role": {"enum": ["title", "signature", "body", "label"]},
+    "text": {"type": "string", "minLength": 1, "maxLength": 300},
+    "drift": {"type": "object", "additionalProperties": false, "required": ["amplitude", "frequency"],
+      "properties": {"amplitude": {"type": "number", "minimum": 0, "maximum": 60}, "frequency": {"type": "number", "exclusiveMinimum": 0, "maximum": 4}}},
+    "common": {
+      "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,40}$"},
+      "color": {"$ref": "#/$defs/color"},
+      "accent": {"type": "boolean"},
+      "revealFrom": {"enum": ["left", "right", "top", "bottom"]},
+      "drift": {"$ref": "#/$defs/drift"}
+    },
+    "layer": {
+      "type": "object",
+      "required": ["id", "type", "color"],
+      "properties": {"type": {"enum": ["text", "square", "rect", "line"]}},
+      "allOf": [
+        {"if": {"properties": {"type": {"const": "text"}}}, "then": {
+          "additionalProperties": false,
+          "required": ["size"],
+          "oneOf": [{"required": ["text", "role"], "not": {"required": ["runs"]}}, {"required": ["runs"], "not": {"anyOf": [{"required": ["text"]}, {"required": ["role"]}]}}],
+          "properties": {
+            "id": {"$ref": "#/$defs/common/id"}, "type": {}, "color": {"$ref": "#/$defs/color"}, "accent": {"type": "boolean"},
+            "revealFrom": {"$ref": "#/$defs/common/revealFrom"}, "drift": {"$ref": "#/$defs/drift"},
+            "text": {"$ref": "#/$defs/text"}, "role": {"$ref": "#/$defs/role"},
+            "runs": {"type": "array", "minItems": 1, "maxItems": 12, "items": {"type": "object", "additionalProperties": false, "required": ["text", "role"],
+              "properties": {"text": {"$ref": "#/$defs/text"}, "role": {"$ref": "#/$defs/role"}, "color": {"$ref": "#/$defs/color"}}}},
+            "size": {"type": "number", "minimum": 8, "maximum": 400},
+            "align": {"enum": ["left", "center", "right"]},
+            "case": {"enum": ["upper"]},
+            "tracking": {"type": "number", "minimum": -0.1, "maximum": 0.5, "description": "letter spacing in em"},
+            "lineHeight": {"type": "number", "minimum": 0.8, "maximum": 2.5}
+          }}},
+        {"if": {"properties": {"type": {"const": "square"}}}, "then": {
+          "additionalProperties": false, "required": ["size"],
+          "properties": {"id": {"$ref": "#/$defs/common/id"}, "type": {}, "color": {"$ref": "#/$defs/color"}, "accent": {"type": "boolean"},
+            "revealFrom": {"$ref": "#/$defs/common/revealFrom"}, "drift": {"$ref": "#/$defs/drift"},
+            "size": {"type": "number", "exclusiveMinimum": 0, "maximum": 4000}}}},
+        {"if": {"properties": {"type": {"const": "rect"}}}, "then": {
+          "additionalProperties": false, "required": ["w", "h"],
+          "properties": {"id": {"$ref": "#/$defs/common/id"}, "type": {}, "color": {"$ref": "#/$defs/color"}, "accent": {"type": "boolean"},
+            "revealFrom": {"$ref": "#/$defs/common/revealFrom"}, "drift": {"$ref": "#/$defs/drift"},
+            "w": {"type": "number", "minimum": 0, "maximum": 4000}, "h": {"type": "number", "minimum": 0, "maximum": 4000},
+            "radius": {"type": "number", "minimum": 0, "maximum": 2000}, "stroke": {"type": "number", "exclusiveMinimum": 0, "maximum": 100}}}},
+        {"if": {"properties": {"type": {"const": "line"}}}, "then": {
+          "additionalProperties": false, "required": ["length", "thickness"],
+          "properties": {"id": {"$ref": "#/$defs/common/id"}, "type": {}, "color": {"$ref": "#/$defs/color"}, "accent": {"type": "boolean"},
+            "revealFrom": {"$ref": "#/$defs/common/revealFrom"}, "drift": {"$ref": "#/$defs/drift"},
+            "length": {"type": "number", "minimum": 0, "maximum": 4000}, "thickness": {"type": "number", "exclusiveMinimum": 0, "maximum": 200}}}}
+      ]
+    },
+    "values": {
+      "type": "object", "additionalProperties": false, "minProperties": 1,
+      "properties": {
+        "x": {"type": "number"}, "y": {"type": "number"},
+        "scale": {"type": "number", "minimum": 0, "maximum": 20},
+        "rotation": {"type": "number", "minimum": -3600, "maximum": 3600},
+        "opacity": {"type": "number", "minimum": 0, "maximum": 1},
+        "reveal": {"type": "number", "minimum": 0, "maximum": 1},
+        "w": {"type": "number", "minimum": 0, "maximum": 4000}, "h": {"type": "number", "minimum": 0, "maximum": 4000}
+      }
+    },
+    "easing": {
+      "oneOf": [
+        {"type": "object", "additionalProperties": false, "required": ["type"], "properties": {"type": {"enum": ["cut", "linear"]}}},
+        {"type": "object", "additionalProperties": false, "required": ["type", "zeta", "omega"],
+          "properties": {"type": {"const": "spring"}, "zeta": {"type": "number", "exclusiveMinimum": 0, "maximum": 5}, "omega": {"type": "number", "exclusiveMinimum": 0, "maximum": 200}}}
+      ]
+    },
+    "state": {
+      "type": "object", "additionalProperties": false, "required": ["layer", "t0", "t1", "to", "easing"],
+      "properties": {
+        "layer": {"type": "string"},
+        "t0": {"type": "number", "minimum": 0}, "t1": {"type": "number", "minimum": 0},
+        "from": {"$ref": "#/$defs/values"}, "to": {"$ref": "#/$defs/values"},
+        "easing": {"$ref": "#/$defs/easing"}
+      }
+    }
+  }
+}

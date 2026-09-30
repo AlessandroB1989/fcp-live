@@ -1,0 +1,30 @@
+{
+  "$schema": "../spec.schema.json",
+  "name": "baair-hook",
+  "title": "Tools, not decks.",
+  "brandkit": "baair",
+  "format": "9x16",
+  "fps": 24,
+  "duration": 4,
+  "seed": 1,
+  "beats": [0, 0.25, 2.5, 3, 4],
+  "shots": [
+    {"name": "Hook", "t0": 0, "t1": 2.5},
+    {"name": "Signature", "t0": 2.5, "t1": 4}
+  ],
+  "preview": {"background": "ink"},
+  "layers": [
+    {"id": "accent", "type": "rect", "w": 56, "h": 56, "color": "purple", "accent": true},
+    {"id": "hook", "type": "text", "size": 96, "color": "ink_paper", "align": "center",
+     "runs": [{"text": "Tools, ", "role": "title"}, {"text": "not decks.", "role": "signature"}]},
+    {"id": "label", "type": "text", "text": "baair.solutions", "role": "label", "case": "upper", "tracking": 0.14,
+     "size": 28, "color": "grey_body_dark", "align": "center"}
+  ],
+  "states": [
+    {"layer": "accent", "t0": 0, "t1": 0, "to": {"x": 0, "y": 760, "opacity": 1}, "easing": {"type": "cut"}},
+    {"layer": "hook", "t0": 0.25, "t1": 0.5833, "from": {"opacity": 0}, "to": {"opacity": 1}, "easing": {"type": "linear"}},
+    {"layer": "hook", "t0": 0.25, "t1": 0.85, "from": {"x": 0, "y": 590}, "to": {"y": 620}, "easing": {"type": "spring", "zeta": 1, "omega": 16}},
+    {"layer": "accent", "t0": 2.5, "t1": 3.1, "to": {"w": 420, "h": 6, "y": 548}, "easing": {"type": "spring", "zeta": 1, "omega": 16}},
+    {"layer": "label", "t0": 3, "t1": 3.3333, "from": {"x": 0, "y": -680, "opacity": 0}, "to": {"opacity": 1}, "easing": {"type": "linear"}}
+  ]
+}

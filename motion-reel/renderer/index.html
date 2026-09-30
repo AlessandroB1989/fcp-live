@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>motion-reel renderer</title>
+<style>html, body { margin: 0; background: transparent; } canvas { display: block; }</style>
+<script src="easing.js"></script>
+<script src="noise.js"></script>
+<script src="draw.js"></script>
+</head>
+<body>
+<canvas id="frame"></canvas>
+<script>
+"use strict";
+// Driven by scripts/render.py through Playwright. Loads nothing from the network: the spec, the resolved
+// brand kit and the font bytes are handed over by the script; fonts are registered with FontFace so a
+// missing or unreadable font fails loudly instead of falling back to a system face.
+(function () {
+  const canvas = document.getElementById("frame");
+  const ctx = canvas.getContext("2d", { alpha: true, willReadFrequently: false });
+  let SPEC = null, KIT = null;
+
+  function bytes(b64) {
+    const raw = atob(b64), out = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+    return out.buffer;
+  }
+
+  window.init = async function ({ spec, kit, fonts }) {
+    for (const f of fonts) {
+      const face = new FontFace(f.alias, bytes(f.data), { weight: f.weightRange, style: f.style });
+      try { await face.load(); } catch (e) { throw new Error("Font failed to load: " + f.label); }
+      document.fonts.add(face);
+      if (!document.fonts.check(`${f.style} ${f.weight} 40px "${f.alias}"`)) throw new Error("Font not usable: " + f.label);
+    }
+    SPEC = spec; KIT = kit;
+    canvas.width = spec.width; canvas.height = spec.height;
+    return true;
+  };
+
+  // Draws frame t (seconds) and resolves with the painted pixels as a PNG data URL (alpha preserved).
+  window.seek = function (t) {
+    MR.draw(ctx, t, SPEC, KIT);
+    return Promise.resolve(canvas.toDataURL("image/png"));
+  };
+
+  window.audit = function (times) {
+    return times.map((t) => ({ t, boxes: MR.bounds(ctx, t, SPEC, KIT) }));
+  };
+
+  // Contact sheet: thumbnails at `times` over the preview background, safe zone dashed, time + shot label.
+  window.contactSheet = function ({ times, cols, thumbWidth, background, safe, labels }) {
+    const scale = thumbWidth / SPEC.width, th = Math.round(SPEC.height * scale), gap = 16, band = 34;
+    const rows = Math.ceil(times.length / cols);
+    const sheet = document.createElement("canvas");
+    sheet.width = cols * thumbWidth + (cols + 1) * gap;
+    sheet.height = rows * (th + band) + (rows + 1) * gap;
+    const s = sheet.getContext("2d");
+    s.fillStyle = "#1c1c1c"; s.fillRect(0, 0, sheet.width, sheet.height);
+    const frame = document.createElement("canvas");
+    frame.width = SPEC.width; frame.height = SPEC.height;
+    const f = frame.getContext("2d");
+    times.forEach((t, i) => {
+      const x = gap + (i % cols) * (thumbWidth + gap), y = gap + Math.floor(i / cols) * (th + band + gap);
+      s.fillStyle = background; s.fillRect(x, y, thumbWidth, th);
+      MR.draw(f, t, SPEC, KIT);
+      s.drawImage(frame, x, y, thumbWidth, th);
+      s.save();
+      s.setLineDash([4, 4]); s.strokeStyle = "rgba(128,128,128,0.9)"; s.lineWidth = 1;
+      s.strokeRect(x + safe.left * scale, y + safe.top * scale, thumbWidth - (safe.left + safe.right) * scale, th - (safe.top + safe.bottom) * scale);
+      s.restore();
+      s.fillStyle = "#e6e6e6"; s.font = "15px Menlo, monospace"; s.textBaseline = "middle";
+      s.fillText(labels[i], x, y + th + band / 2);
+    });
+    return sheet.toDataURL("image/png");
+  };
+})();
+</script>
+</body>
+</html>
