@@ -1,0 +1,10 @@
+{ "name": "Reel baair — motion-reel overlay", "width": 1080, "height": 1920, "fps": "24", "durationFrames": 192,
+  "destination": { "library": "Perso", "event": "Raccord" },
+  "brandkit": { "id": "baair", "templateScale": 2.0,
+    "colors": [{"name":"ink_paper","hex":"#FAFAF7"},{"name":"purple","hex":"#8C57E9"},{"name":"grey_body_dark","hex":"#C9C9C2"}],
+    "fonts": [{"role":"title","family":"Fraunces","face":"Bold"},{"role":"signature","family":"Instrument Serif","face":"Italic"},
+              {"role":"body","family":"Inter","face":"Regular"},{"role":"label","family":"JetBrains Mono","face":"Regular"}] },
+  "clips": [ {"media":"higgsfield-bureau.mp4","name":"Plan bureau","offsetFrames":0,"sourceStartFrames":0,"durationFrames":192,"lane":1,"audioOnly":false,"volumeDB":-12},
+             {"media":"baair-hook-9x16.mov","name":"Hook motion (motion-reel)","offsetFrames":0,"sourceStartFrames":0,"durationFrames":96,"lane":2,"audioOnly":false} ],
+  "titles": [],
+  "markers": [ {"frame":6,"text":"Hook"}, {"frame":60,"text":"Morph accent"}, {"frame":72,"text":"Label"} ] }
